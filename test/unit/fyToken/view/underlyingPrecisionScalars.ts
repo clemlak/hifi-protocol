@@ -5,7 +5,7 @@ import { FyToken } from "../../../../typechain/FyToken";
 import { deployFyToken } from "../../../deployers";
 import { fyTokenConstants, precisionScalars } from "../../../../helpers/constants";
 
-export default function shouldBehaveLikeUnderlyingPrecisionScalarGetter(): void {
+export default function shouldBehaveLikeUnderlyingPrecisionScalarsGetter(): void {
   describe("when the underlying has 18 decimals", function () {
     beforeEach(async function () {
       await this.stubs.underlying.mock.decimals.returns(BigNumber.from(18));
@@ -29,7 +29,7 @@ export default function shouldBehaveLikeUnderlyingPrecisionScalarGetter(): void 
         this.stubs.fintroller.address,
         this.stubs.balanceSheet.address,
         this.stubs.underlying.address,
-        this.stubs.collateral.address,
+        this.stubs.collaterals.map((collateral) => collateral.address),
       );
       const underlyingPrecisionScalar: BigNumber = await fyToken.underlyingPrecisionScalar();
       expect(underlyingPrecisionScalar).to.equal(precisionScalars.tokenWith8Decimals);

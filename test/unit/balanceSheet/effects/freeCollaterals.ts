@@ -6,15 +6,15 @@ import { BalanceSheetErrors, GenericErrors } from "../../../../helpers/errors";
 import { fintrollerConstants, tokenAmounts } from "../../../../helpers/constants";
 import { Vault } from "../../../../types";
 
-export default function shouldBehaveLikeLockCollateral(): void {
-  const depositCollateralAmount: BigNumber = tokenAmounts.ten;
+export default function shouldBehaveLikeLockCollaterals(): void {
+  const depositCollateralAmounts: BigNumber[] = [tokenAmounts.ten, tokenAmounts.ten];
 
   describe("when the vault is not open", function () {
     it("reverts", async function () {
       await expect(
         this.contracts.balanceSheet
           .connect(this.signers.borrower)
-          .freeCollateral(this.stubs.fyToken.address, depositCollateralAmount),
+          .freeCollaterals(this.stubs.fyToken.address, depositCollateralAmounts),
       ).to.be.revertedWith(GenericErrors.VaultNotOpen);
     });
   });
@@ -24,26 +24,26 @@ export default function shouldBehaveLikeLockCollateral(): void {
       await this.contracts.balanceSheet.connect(this.signers.borrower).openVault(this.stubs.fyToken.address);
     });
 
-    describe("when the collateral amount to free is zero", function () {
+    describe("when the collateral amounts to free are zero", function () {
       it("reverts", async function () {
         await expect(
-          this.contracts.balanceSheet.connect(this.signers.borrower).freeCollateral(this.stubs.fyToken.address, Zero),
-        ).to.be.revertedWith(BalanceSheetErrors.FreeCollateralZero);
+          this.contracts.balanceSheet.connect(this.signers.borrower).freeCollaterals(this.stubs.fyToken.address, [Zero, Zero]),
+        ).to.be.revertedWith(BalanceSheetErrors.FreeCollateralsZero);
       });
     });
 
-    describe("when the collateral amount to free is not zero", function () {
+    describe("when the collateral amounts to free are not zero", function () {
       describe("when the caller did not deposit any collateral", function () {
         it("reverts", async function () {
           await expect(
             this.contracts.balanceSheet
               .connect(this.signers.borrower)
-              .freeCollateral(this.stubs.fyToken.address, depositCollateralAmount),
-          ).to.be.revertedWith(BalanceSheetErrors.InsufficientLockedCollateral);
+              .freeCollaterals(this.stubs.fyToken.address, depositCollateralAmounts),
+          ).to.be.revertedWith(BalanceSheetErrors.InsufficientLockedCollaterals);
         });
       });
 
-      describe("when the caller deposited collateral", function () {
+      describe("when the caller deposited collaterals", function () {
         beforeEach(async function () {
           /* Mock the required functions on the Fintroller and the collateral token stubs. */
           await this.stubs.fintroller.mock.getBondCollateralizationRatio
@@ -52,55 +52,60 @@ export default function shouldBehaveLikeLockCollateral(): void {
           await this.stubs.fintroller.mock.getDepositCollateralAllowed
             .withArgs(this.stubs.fyToken.address)
             .returns(true);
-          await this.stubs.collateral.mock.transferFrom
-            .withArgs(this.accounts.borrower, this.contracts.balanceSheet.address, depositCollateralAmount)
-            .returns(true);
 
-          /* Deposit 10 WETH. */
+          for (let i = 0; i < this.stubs.collaterals.length; i += 1) {
+            await this.stubs.collaterals[i].mock.transferFrom
+              .withArgs(this.accounts.borrower, this.contracts.balanceSheet.address, depositCollateralAmounts[i])
+              .returns(true);
+          }
+
+          /* Deposit 2 x 10 WETH. */
           await this.contracts.balanceSheet
             .connect(this.signers.borrower)
-            .depositCollateral(this.stubs.fyToken.address, depositCollateralAmount);
+            .depositCollaterals(this.stubs.fyToken.address, depositCollateralAmounts);
         });
 
-        describe("when the caller did not lock the collateral", function () {
+        describe("when the caller did not lock the collaterals", function () {
           it("reverts", async function () {
             await expect(
               this.contracts.balanceSheet
                 .connect(this.signers.borrower)
-                .freeCollateral(this.stubs.fyToken.address, depositCollateralAmount),
-            ).to.be.revertedWith(BalanceSheetErrors.InsufficientLockedCollateral);
+                .freeCollaterals(this.stubs.fyToken.address, depositCollateralAmounts),
+            ).to.be.revertedWith(BalanceSheetErrors.InsufficientLockedCollaterals);
           });
         });
 
-        describe("when the caller locked the collateral", function () {
+        describe("when the caller locked the collaterals", function () {
           beforeEach(async function () {
             await this.contracts.balanceSheet
               .connect(this.signers.borrower)
-              .lockCollateral(this.stubs.fyToken.address, depositCollateralAmount);
+              .lockCollaterals(this.stubs.fyToken.address, depositCollateralAmounts);
           });
 
           describe("when the caller does not have a debt", function () {
-            it("it frees the collateral", async function () {
+            it("it frees the collaterals", async function () {
               const oldVault: Vault = await this.contracts.balanceSheet.getVault(
                 this.stubs.fyToken.address,
                 this.accounts.borrower,
               );
-              const oldFreeCollateral: BigNumber = oldVault[1];
-              const oldLockedCollateral: BigNumber = oldVault[2];
+              const oldFreeCollaterals: BigNumber[] = oldVault[1];
+              const oldLockedCollaterals: BigNumber[] = oldVault[2];
 
               await this.contracts.balanceSheet
                 .connect(this.signers.borrower)
-                .freeCollateral(this.stubs.fyToken.address, depositCollateralAmount);
+                .freeCollaterals(this.stubs.fyToken.address, depositCollateralAmounts);
 
               const newVault: Vault = await this.contracts.balanceSheet.getVault(
                 this.stubs.fyToken.address,
                 this.accounts.borrower,
               );
-              const newFreeCollateral: BigNumber = newVault[1];
-              const newLockedCollateral: BigNumber = newVault[2];
+              const newFreeCollaterals: BigNumber[] = newVault[1];
+              const newLockedCollaterals: BigNumber[] = newVault[2];
 
-              expect(oldFreeCollateral).to.equal(newFreeCollateral.sub(depositCollateralAmount));
-              expect(oldLockedCollateral).to.equal(newLockedCollateral.add(depositCollateralAmount));
+              for (let i = 0; i < this.stubs.collaterals.length; i += 1) {
+                expect(oldFreeCollaterals[i]).to.equal(newFreeCollaterals[i].sub(depositCollateralAmounts[i]));
+                expect(oldLockedCollaterals[i]).to.equal(newLockedCollaterals[i].add(depositCollateralAmounts[i]));
+              }
             });
           });
 
@@ -124,11 +129,11 @@ export default function shouldBehaveLikeLockCollateral(): void {
               });
 
               it("reverts", async function () {
-                const collateralAmount: BigNumber = tokenAmounts.one;
+                const collateralAmounts: BigNumber[] = [tokenAmounts.one, tokenAmounts.one];
                 await expect(
                   this.contracts.balanceSheet
                     .connect(this.signers.borrower)
-                    .freeCollateral(this.stubs.fyToken.address, collateralAmount),
+                    .freeCollaterals(this.stubs.fyToken.address, collateralAmounts),
                 ).to.be.revertedWith(GenericErrors.BelowCollateralizationRatio);
               });
             });
@@ -148,34 +153,36 @@ export default function shouldBehaveLikeLockCollateral(): void {
                   this.stubs.fyToken.address,
                   this.accounts.borrower,
                 );
-                const oldFreeCollateral: BigNumber = oldVault[1];
-                const oldLockedCollateral: BigNumber = oldVault[2];
+                const oldFreeCollaterals: BigNumber[] = oldVault[1];
+                const oldLockedCollaterals: BigNumber []= oldVault[2];
 
-                const collateralAmount: BigNumber = tokenAmounts.one;
+                const collateralAmounts: BigNumber[] = [tokenAmounts.one, tokenAmounts.one];
                 await this.contracts.balanceSheet
                   .connect(this.signers.borrower)
-                  .freeCollateral(this.stubs.fyToken.address, collateralAmount);
+                  .freeCollaterals(this.stubs.fyToken.address, collateralAmounts);
 
                 const newVault: Vault = await this.contracts.balanceSheet.getVault(
                   this.stubs.fyToken.address,
                   this.accounts.borrower,
                 );
-                const newFreeCollateral: BigNumber = newVault[1];
-                const newLockedCollateral: BigNumber = newVault[2];
+                const newFreeCollaterals: BigNumber[] = newVault[1];
+                const newLockedCollaterals: BigNumber[] = newVault[2];
 
-                expect(oldFreeCollateral).to.equal(newFreeCollateral.sub(tokenAmounts.one));
-                expect(oldLockedCollateral).to.equal(newLockedCollateral.add(tokenAmounts.one));
+                for (let i = 0; i < this.stubs.collaterals.length; i += 1) {
+                  expect(oldFreeCollaterals[i]).to.equal(newFreeCollaterals[i].sub(collateralAmounts[i]));
+                  expect(oldLockedCollaterals[i]).to.equal(newLockedCollaterals[i].add(collateralAmounts[i]));
+                }
               });
 
-              it("emits a FreeCollateral event", async function () {
-                const collateralAmount: BigNumber = tokenAmounts.one;
+              it("emits a FreeCollaterals event", async function () {
+                const collateralAmounts: BigNumber[] = [tokenAmounts.one, tokenAmounts.one];
                 await expect(
                   this.contracts.balanceSheet
                     .connect(this.signers.borrower)
-                    .freeCollateral(this.stubs.fyToken.address, collateralAmount),
+                    .freeCollaterals(this.stubs.fyToken.address, collateralAmounts),
                 )
-                  .to.emit(this.contracts.balanceSheet, "FreeCollateral")
-                  .withArgs(this.stubs.fyToken.address, this.accounts.borrower, collateralAmount);
+                  .to.emit(this.contracts.balanceSheet, "FreeCollaterals")
+                  .withArgs(this.stubs.fyToken.address, this.accounts.borrower, this.stubs.collaterals.map((collateral) => (collateral.address)), collateralAmounts);
               });
             });
           });

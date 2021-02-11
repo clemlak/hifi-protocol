@@ -97,8 +97,8 @@ export const defaultPrivateKeys = {
 export const balanceSheetConstants = {
   defaultVault: {
     debt: Zero,
-    freeCollateral: Zero,
-    lockedCollateral: Zero,
+    freeCollaterals: [Zero],
+    lockedCollaterals: [Zero],
     isOpen: true,
   },
 };

@@ -23,7 +23,7 @@ export default function shouldBehaveLikeConstructor(): void {
         this.stubs.fintroller.address,
         this.stubs.balanceSheet.address,
         this.stubs.underlying.address,
-        this.stubs.collateral.address,
+        this.stubs.collaterals.map((collateral) => collateral.address),
       );
       await expect(deployFyTokenPromise).to.be.revertedWith(FyTokenErrors.ConstructorUnderlyingDecimalsZero);
     });
@@ -41,15 +41,17 @@ export default function shouldBehaveLikeConstructor(): void {
         this.stubs.fintroller.address,
         this.stubs.balanceSheet.address,
         this.stubs.underlying.address,
-        this.stubs.collateral.address,
+        this.stubs.collaterals.map((collateral) => collateral.address),
       );
       await expect(deployFyTokenPromise).to.be.revertedWith(FyTokenErrors.ConstructorUnderlyingDecimalsOverflow);
     });
   });
 
-  describe("when the collateral has zero decimals", function () {
+  describe("when at least one of the collaterals has zero decimals", function () {
     beforeEach(async function () {
-      await this.stubs.collateral.mock.decimals.returns(Zero);
+      for (let i = 0; i < this.stubs.collaterals.length; i += 1) {
+        await this.stubs.collaterals[i].mock.decimals.returns(Zero);
+      }
     });
 
     it("reverts", async function () {
@@ -59,15 +61,17 @@ export default function shouldBehaveLikeConstructor(): void {
         this.stubs.fintroller.address,
         this.stubs.balanceSheet.address,
         this.stubs.underlying.address,
-        this.stubs.collateral.address,
+        this.stubs.collaterals.map((collateral) => collateral.address),
       );
       await expect(deployFyTokenPromise).to.be.revertedWith(FyTokenErrors.ConstructorCollateralDecimalsZero);
     });
   });
 
-  describe("when the collateral has more than 18 decimals", function () {
+  describe("when at least one of the collaterals has more than 18 decimals", function () {
     beforeEach(async function () {
-      await this.stubs.collateral.mock.decimals.returns(BigNumber.from(36));
+      for (let i = 0; i < this.stubs.collaterals.length; i += 1) {
+        await this.stubs.collaterals[i].mock.decimals.returns(BigNumber.from(36));
+      }
     });
 
     it("reverts", async function () {
@@ -77,7 +81,7 @@ export default function shouldBehaveLikeConstructor(): void {
         this.stubs.fintroller.address,
         this.stubs.balanceSheet.address,
         this.stubs.underlying.address,
-        this.stubs.collateral.address,
+        this.stubs.collaterals.map((collateral) => collateral.address),
       );
       await expect(deployFyTokenPromise).to.be.revertedWith(FyTokenErrors.ConstructorCollateralDecimalsOverflow);
     });
@@ -92,7 +96,7 @@ export default function shouldBehaveLikeConstructor(): void {
         this.stubs.fintroller.address,
         this.stubs.balanceSheet.address,
         this.stubs.underlying.address,
-        this.stubs.collateral.address,
+        this.stubs.collaterals.map((collateral) => collateral.address),
       );
       await expect(deployFyTokenPromise).to.be.revertedWith(FyTokenErrors.ConstructorExpirationTimeNotValid);
     });

@@ -89,13 +89,13 @@ export async function stubGetVault(
   fyTokenAddress: string,
   account: string,
   debt: BigNumber,
-  freeCollateral: BigNumber,
-  lockedCollateral: BigNumber,
+  freeCollaterals: BigNumber[],
+  lockedCollaterals: BigNumber[],
   isOpen: boolean,
 ): Promise<void> {
   await this.stubs.balanceSheet.mock.getVault
     .withArgs(fyTokenAddress, account)
-    .returns(debt, freeCollateral, lockedCollateral, isOpen);
+    .returns(debt, freeCollaterals, lockedCollaterals, isOpen);
 }
 
 export async function stubIsVaultOpen(this: Mocha.Context, fyTokenAddress: string, account: string): Promise<void> {
@@ -105,36 +105,36 @@ export async function stubIsVaultOpen(this: Mocha.Context, fyTokenAddress: strin
   await this.stubs.balanceSheet.mock.isVaultOpen.withArgs(fyTokenAddress, account).returns(true);
 }
 
-export async function stubVaultFreeCollateral(
+export async function stubVaultFreeCollaterals(
   this: Mocha.Context,
   fyTokenAddress: string,
   account: string,
-  freeCollateral: BigNumber,
+  freeCollaterals: BigNumber[],
 ): Promise<void> {
   await stubGetVault.call(
     this,
     fyTokenAddress,
     account,
     balanceSheetConstants.defaultVault.debt,
-    freeCollateral,
-    balanceSheetConstants.defaultVault.lockedCollateral,
+    freeCollaterals,
+    balanceSheetConstants.defaultVault.lockedCollaterals,
     balanceSheetConstants.defaultVault.isOpen,
   );
 }
 
-export async function stubVaultLockedCollateral(
+export async function stubVaultLockedCollaterals(
   this: Mocha.Context,
   fyTokenAddress: string,
   account: string,
-  lockedCollateral: BigNumber,
+  lockedCollaterals: BigNumber[],
 ): Promise<void> {
   await stubGetVault.call(
     this,
     fyTokenAddress,
     account,
     balanceSheetConstants.defaultVault.debt,
-    balanceSheetConstants.defaultVault.freeCollateral,
-    lockedCollateral,
+    balanceSheetConstants.defaultVault.freeCollaterals,
+    lockedCollaterals,
     balanceSheetConstants.defaultVault.isOpen,
   );
 }

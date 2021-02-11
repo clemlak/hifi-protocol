@@ -3,18 +3,18 @@ export enum AdminErrors {
 }
 
 export enum BalanceSheetErrors {
-  ClutchCollateralNotAuthorized = "ERR_CLUTCH_COLLATERAL_NOT_AUTHORIZED",
-  DepositCollateralNotAllowed = "ERR_DEPOSIT_COLLATERAL_NOT_ALLOWED",
-  DepositCollateralZero = "ERR_DEPOSIT_COLLATERAL_ZERO",
-  FreeCollateralZero = "ERR_FREE_COLLATERAL_ZERO",
-  GetClutchableCollateralZero = "ERR_GET_CLUTCHABLE_COLLATERAL_ZERO",
+  ClutchCollateralsNotAuthorized = "ERR_CLUTCH_COLLATERALS_NOT_AUTHORIZED",
+  DepositCollateralsNotAllowed = "ERR_DEPOSIT_COLLATERALS_NOT_ALLOWED",
+  DepositCollateralsZero = "ERR_DEPOSIT_COLLATERALS_ZERO",
+  FreeCollateralsZero = "ERR_FREE_COLLATERALS_ZERO",
+  GetClutchableCollateralsZero = "ERR_GET_CLUTCHABLE_COLLATERALS_ZERO",
   GetHypotheticalCollateralizationRatioDebtZero = "ERR_GET_HYPOTHETICAL_COLLATERALIZATION_RATIO_DEBT_ZERO",
-  InsufficientFreeCollateral = "ERR_INSUFFICIENT_FREE_COLLATERAL",
-  InsufficientLockedCollateral = "ERR_INSUFFICIENT_LOCKED_COLLATERAL",
-  LockCollateralZero = "ERR_LOCK_COLLATERAL_ZERO",
+  InsufficientFreeCollaterals = "ERR_INSUFFICIENT_FREE_COLLATERALS",
+  InsufficientLockedCollaterals = "ERR_INSUFFICIENT_LOCKED_COLLATERALS",
+  LockCollateralsZero = "ERR_LOCK_COLLATERALS_ZERO",
   OpenVaultFyTokenInspection = "ERR_OPEN_VAULT_FYTOKEN_INSPECTION",
   SetVaultDebtNotAuthorized = "ERR_SET_VAULT_DEBT_NOT_AUTHORIZED",
-  WithdrawCollateralZero = "ERR_WITHDRAW_COLLATERAL_ZERO",
+  WithdrawCollateralsZero = "ERR_WITHDRAW_COLLATERALS_ZERO",
 }
 
 export enum ChainlinkOperatorErrors {

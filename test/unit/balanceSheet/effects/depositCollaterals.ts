@@ -5,16 +5,16 @@ import { expect } from "chai";
 import { BalanceSheetErrors, FintrollerErrors, GenericErrors } from "../../../../helpers/errors";
 import { fintrollerConstants, tokenAmounts } from "../../../../helpers/constants";
 
-export default function shouldBehaveLikeDepositCollateral(): void {
-  const collateralAmount: BigNumber = tokenAmounts.ten;
-  const zeroCollateralAmount: BigNumber = Zero;
+export default function shouldBehaveLikeDepositCollaterals(): void {
+  const collateralAmounts: BigNumber[] = [tokenAmounts.ten, tokenAmounts.ten];
+  const zeroCollateralAmounts: BigNumber[] = [Zero, Zero];
 
   describe("when the vault is not open", function () {
     it("reverts", async function () {
       await expect(
         this.contracts.balanceSheet
           .connect(this.signers.borrower)
-          .depositCollateral(this.stubs.fyToken.address, collateralAmount),
+          .depositCollaterals(this.stubs.fyToken.address, collateralAmounts),
       ).to.be.revertedWith(GenericErrors.VaultNotOpen);
     });
   });
@@ -24,17 +24,17 @@ export default function shouldBehaveLikeDepositCollateral(): void {
       await this.contracts.balanceSheet.connect(this.signers.borrower).openVault(this.stubs.fyToken.address);
     });
 
-    describe("when the amount to deposit is zero", function () {
+    describe("when the amounts to deposit are zero", function () {
       it("reverts", async function () {
         await expect(
           this.contracts.balanceSheet
             .connect(this.signers.borrower)
-            .depositCollateral(this.stubs.fyToken.address, zeroCollateralAmount),
-        ).to.be.revertedWith(BalanceSheetErrors.DepositCollateralZero);
+            .depositCollaterals(this.stubs.fyToken.address, zeroCollateralAmounts),
+        ).to.be.revertedWith(BalanceSheetErrors.DepositCollateralsZero);
       });
     });
 
-    describe("when the amount to deposit is not zero", function () {
+    describe("when the amounts to deposit are not zero", function () {
       describe("when the bond is not listed", function () {
         beforeEach(async function () {
           await this.stubs.fintroller.mock.getDepositCollateralAllowed
@@ -46,7 +46,7 @@ export default function shouldBehaveLikeDepositCollateral(): void {
           await expect(
             this.contracts.balanceSheet
               .connect(this.signers.borrower)
-              .depositCollateral(this.stubs.fyToken.address, collateralAmount),
+              .depositCollaterals(this.stubs.fyToken.address, collateralAmounts),
           ).to.be.revertedWith(FintrollerErrors.BondNotListed);
         });
       });
@@ -58,7 +58,7 @@ export default function shouldBehaveLikeDepositCollateral(): void {
             .returns(fintrollerConstants.defaultCollateralizationRatio);
         });
 
-        describe("when the fintroller does not allow deposit collateral", function () {
+        describe("when the fintroller does not allow deposit collaterals", function () {
           beforeEach(async function () {
             await this.stubs.fintroller.mock.getDepositCollateralAllowed
               .withArgs(this.stubs.fyToken.address)
@@ -69,8 +69,8 @@ export default function shouldBehaveLikeDepositCollateral(): void {
             await expect(
               this.contracts.balanceSheet
                 .connect(this.signers.borrower)
-                .depositCollateral(this.stubs.fyToken.address, collateralAmount),
-            ).to.be.revertedWith(BalanceSheetErrors.DepositCollateralNotAllowed);
+                .depositCollaterals(this.stubs.fyToken.address, collateralAmounts),
+            ).to.be.revertedWith(BalanceSheetErrors.DepositCollateralsNotAllowed);
           });
         });
 
@@ -81,27 +81,31 @@ export default function shouldBehaveLikeDepositCollateral(): void {
               .returns(true);
           });
 
-          describe("when the call to transfer the collateral does not succeed", function () {
+          describe("when the call to transfer the collaterals does not succeed", function () {
             beforeEach(async function () {
-              await this.stubs.collateral.mock.transferFrom
-                .withArgs(this.accounts.borrower, this.contracts.balanceSheet.address, collateralAmount)
-                .returns(false);
+              for (let i = 0; i < this.stubs.collaterals.length; i += 1) {
+                await this.stubs.collaterals[i].mock.transferFrom
+                  .withArgs(this.accounts.borrower, this.contracts.balanceSheet.address, collateralAmounts[i])
+                  .returns(false);
+              }
             });
 
             it("reverts", async function () {
               await expect(
                 this.contracts.balanceSheet
                   .connect(this.signers.borrower)
-                  .depositCollateral(this.stubs.fyToken.address, collateralAmount),
+                  .depositCollaterals(this.stubs.fyToken.address, collateralAmounts),
               ).to.be.reverted;
             });
           });
 
           describe("when the call to transfer the collateral succeeds", function () {
             beforeEach(async function () {
-              await this.stubs.collateral.mock.transferFrom
-                .withArgs(this.accounts.borrower, this.contracts.balanceSheet.address, collateralAmount)
+              for (let i = 0; i < this.stubs.collaterals.length; i += 1) {
+                await this.stubs.collaterals[i].mock.transferFrom
+                .withArgs(this.accounts.borrower, this.contracts.balanceSheet.address, collateralAmounts[i])
                 .returns(true);
+              }
             });
 
             it("makes the collateral deposit", async function () {
@@ -109,26 +113,34 @@ export default function shouldBehaveLikeDepositCollateral(): void {
                 this.stubs.fyToken.address,
                 this.accounts.borrower,
               );
-              const oldFreeCollateral: BigNumber = oldVault[1];
+              const oldFreeCollaterals: BigNumber[] = oldVault[1];
               await this.contracts.balanceSheet
                 .connect(this.signers.borrower)
-                .depositCollateral(this.stubs.fyToken.address, collateralAmount);
+                .depositCollaterals(this.stubs.fyToken.address, collateralAmounts);
               const newVault = await this.contracts.balanceSheet.getVault(
                 this.stubs.fyToken.address,
                 this.accounts.borrower,
               );
-              const newFreeCollateral: BigNumber = newVault[1];
-              expect(oldFreeCollateral).to.equal(newFreeCollateral.sub(collateralAmount));
+              const newFreeCollaterals: BigNumber[] = newVault[1];
+
+              for (let i = 0; i < this.stubs.collaterals.length; i += 1) {
+                expect(oldFreeCollaterals[i]).to.equal(newFreeCollaterals[i].sub(collateralAmounts[i]));
+              }
             });
 
-            it("emits a DepositCollateral event", async function () {
+            it("emits a DepositCollaterals event", async function () {
               await expect(
                 this.contracts.balanceSheet
                   .connect(this.signers.borrower)
-                  .depositCollateral(this.stubs.fyToken.address, collateralAmount),
+                  .depositCollaterals(this.stubs.fyToken.address, collateralAmounts),
               )
-                .to.emit(this.contracts.balanceSheet, "DepositCollateral")
-                .withArgs(this.stubs.fyToken.address, this.accounts.borrower, collateralAmount);
+                .to.emit(this.contracts.balanceSheet, "DepositCollaterals")
+                .withArgs(
+                  this.stubs.fyToken.address,
+                  this.accounts.borrower,
+                  this.stubs.collaterals.map((collateral) => (collateral.address)),
+                  collateralAmounts,
+                );
             });
           });
         });

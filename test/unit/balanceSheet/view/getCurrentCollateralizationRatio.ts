@@ -4,15 +4,15 @@ import { expect } from "chai";
 import { percentages, tokenAmounts } from "../../../../helpers/constants";
 
 export default function shouldBehaveLikeGetCurrentCollateralizationRatio(): void {
-  const debt: BigNumber = tokenAmounts.oneHundred;
-  const lockedCollateral: BigNumber = tokenAmounts.ten;
+  const debt: BigNumber = tokenAmounts.oneHundred.mul(BigNumber.from(2)); // TODO: Verify this amount
+  const lockedCollaterals: BigNumber[] = [tokenAmounts.ten, tokenAmounts.ten];
 
   beforeEach(async function () {
     await this.contracts.balanceSheet.connect(this.signers.borrower).openVault(this.stubs.fyToken.address);
-    await this.contracts.balanceSheet.__godMode_setVaultLockedCollateral(
+    await this.contracts.balanceSheet.__godMode_setVaultLockedCollaterals(
       this.stubs.fyToken.address,
       this.accounts.borrower,
-      lockedCollateral,
+      lockedCollaterals,
     );
     await this.contracts.balanceSheet.__godMode_setVaultDebt(this.stubs.fyToken.address, this.accounts.borrower, debt);
   });

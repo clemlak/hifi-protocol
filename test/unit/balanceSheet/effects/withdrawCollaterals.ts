@@ -6,14 +6,14 @@ import { BalanceSheetErrors, GenericErrors } from "../../../../helpers/errors";
 import { tokenAmounts } from "../../../../helpers/constants";
 
 export default function shouldBehaveLikeWithdrawCollateral(): void {
-  const collateralAmount: BigNumber = tokenAmounts.ten;
+  const collateralAmounts: BigNumber[] = [tokenAmounts.ten, tokenAmounts.ten];
 
   describe("when the vault is not open", function () {
     it("reverts", async function () {
       await expect(
         this.contracts.balanceSheet
           .connect(this.signers.borrower)
-          .withdrawCollateral(this.stubs.fyToken.address, collateralAmount),
+          .withdrawCollaterals(this.stubs.fyToken.address, collateralAmounts),
       ).to.be.revertedWith(GenericErrors.VaultNotOpen);
     });
   });
@@ -23,24 +23,24 @@ export default function shouldBehaveLikeWithdrawCollateral(): void {
       await this.contracts.balanceSheet.connect(this.signers.borrower).openVault(this.stubs.fyToken.address);
     });
 
-    describe("when the amount to withdraw is zero", function () {
+    describe("when the amounts to withdraw are zero", function () {
       it("reverts", async function () {
         await expect(
           this.contracts.balanceSheet
             .connect(this.signers.borrower)
-            .withdrawCollateral(this.stubs.fyToken.address, Zero),
-        ).to.be.revertedWith(BalanceSheetErrors.WithdrawCollateralZero);
+            .withdrawCollaterals(this.stubs.fyToken.address, [Zero, Zero]),
+        ).to.be.revertedWith(BalanceSheetErrors.WithdrawCollateralsZero);
       });
     });
 
-    describe("when the amount to withdraw is not zero", function () {
+    describe("when the amounts to withdraw are not zero", function () {
       describe("when the caller did not deposit any collateral", function () {
         it("reverts", async function () {
           await expect(
             this.contracts.balanceSheet
               .connect(this.signers.borrower)
-              .withdrawCollateral(this.stubs.fyToken.address, collateralAmount),
-          ).to.be.revertedWith(BalanceSheetErrors.InsufficientFreeCollateral);
+              .withdrawCollaterals(this.stubs.fyToken.address, collateralAmounts),
+          ).to.be.revertedWith(BalanceSheetErrors.InsufficientFreeCollaterals);
         });
       });
 
@@ -49,49 +49,55 @@ export default function shouldBehaveLikeWithdrawCollateral(): void {
           await this.stubs.fintroller.mock.getDepositCollateralAllowed
             .withArgs(this.stubs.fyToken.address)
             .returns(true);
-          await this.stubs.collateral.mock.transferFrom
-            .withArgs(this.accounts.borrower, this.contracts.balanceSheet.address, collateralAmount)
-            .returns(true);
+
+          for (let i = 0; i < this.stubs.collaterals.length; i += 1) {
+            await this.stubs.collaterals[i].mock.transferFrom
+              .withArgs(this.accounts.borrower, this.contracts.balanceSheet.address, collateralAmounts[i])
+              .returns(true);
+          }
+
           await this.contracts.balanceSheet
             .connect(this.signers.borrower)
-            .depositCollateral(this.stubs.fyToken.address, collateralAmount);
+            .depositCollaterals(this.stubs.fyToken.address, collateralAmounts);
         });
 
-        describe("when the caller locked the collateral", function () {
+        describe("when the caller locked the collaterals", function () {
           beforeEach(async function () {
             await this.contracts.balanceSheet
               .connect(this.signers.borrower)
-              .lockCollateral(this.stubs.fyToken.address, collateralAmount);
+              .lockCollaterals(this.stubs.fyToken.address, collateralAmounts);
           });
 
           it("reverts", async function () {
             await expect(
               this.contracts.balanceSheet
                 .connect(this.signers.borrower)
-                .withdrawCollateral(this.stubs.fyToken.address, collateralAmount),
-            ).to.be.revertedWith(BalanceSheetErrors.InsufficientFreeCollateral);
+                .withdrawCollaterals(this.stubs.fyToken.address, collateralAmounts),
+            ).to.be.revertedWith(BalanceSheetErrors.InsufficientFreeCollaterals);
           });
         });
 
-        describe("when the caller did not lock the collateral", function () {
+        describe("when the caller did not lock the collaterals", function () {
           beforeEach(async function () {
-            await this.stubs.collateral.mock.transfer.withArgs(this.accounts.borrower, collateralAmount).returns(true);
+            for (let i = 0; i < this.stubs.collaterals.length; i += 1) {
+              await this.stubs.collaterals[i].mock.transfer.withArgs(this.accounts.borrower, collateralAmounts[i]).returns(true);
+            }
           });
 
-          it("makes the collateral withdrawal", async function () {
+          it("makes the collateral withdrawals", async function () {
             await this.contracts.balanceSheet
               .connect(this.signers.borrower)
-              .withdrawCollateral(this.stubs.fyToken.address, collateralAmount);
+              .withdrawCollaterals(this.stubs.fyToken.address, collateralAmounts);
           });
 
-          it("emits a WithdrawCollateral event", async function () {
+          it("emits a WithdrawCollaterals event", async function () {
             await expect(
               this.contracts.balanceSheet
                 .connect(this.signers.borrower)
-                .withdrawCollateral(this.stubs.fyToken.address, collateralAmount),
+                .withdrawCollaterals(this.stubs.fyToken.address, collateralAmounts),
             )
-              .to.emit(this.contracts.balanceSheet, "WithdrawCollateral")
-              .withArgs(this.stubs.fyToken.address, this.accounts.borrower, collateralAmount);
+              .to.emit(this.contracts.balanceSheet, "WithdrawCollaterals")
+              .withArgs(this.stubs.fyToken.address, this.accounts.borrower, this.stubs.collaterals.map((collateral) => (collateral.address)), collateralAmounts);
           });
         });
       });

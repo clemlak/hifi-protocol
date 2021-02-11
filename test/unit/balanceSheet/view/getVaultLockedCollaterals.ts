@@ -2,14 +2,14 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { Zero } from "@ethersproject/constants";
 import { expect } from "chai";
 
-export default function shouldBehaveLikeGetVaultLockedCollateral(): void {
+export default function shouldBehaveLikeGetVaultLockedCollaterals(): void {
   describe("when the bond is not open", function () {
     it("retrieves the default value", async function () {
-      const lockedCollateral: BigNumber = await this.contracts.balanceSheet.getVaultLockedCollateral(
+      const lockedCollaterals: BigNumber[] = await this.contracts.balanceSheet.getVaultLockedCollaterals(
         this.stubs.fyToken.address,
         this.accounts.borrower,
       );
-      expect(lockedCollateral).to.equal(Zero);
+      expect(lockedCollaterals).to.eql(Array(this.stubs.collaterals.length).fill(Zero));
     });
   });
 
@@ -19,11 +19,11 @@ export default function shouldBehaveLikeGetVaultLockedCollateral(): void {
     });
 
     it("retrieves the default value", async function () {
-      const lockedCollateral: BigNumber = await this.contracts.balanceSheet.getVaultLockedCollateral(
+      const lockedCollaterals: BigNumber[]= await this.contracts.balanceSheet.getVaultLockedCollaterals(
         this.stubs.fyToken.address,
         this.accounts.borrower,
       );
-      expect(lockedCollateral).to.equal(Zero);
+      expect(lockedCollaterals).to.eql(Array(this.stubs.collaterals.length).fill(Zero));
     });
   });
 }

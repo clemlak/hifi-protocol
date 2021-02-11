@@ -83,7 +83,7 @@ contract BalanceSheet is
         vars.clutchableCollateralAmounts = new uint256[](collaterals.length);
 
         /* Avoid the zero edge cases. */
-        require(repayAmount > 0, "ERR_GET_CLUTCHABLE_COLLATERAL_ZERO");
+        require(repayAmount > 0, "ERR_GET_CLUTCHABLE_COLLATERALS_ZERO");
 
         /* When the liquidation incentive is zero, the end result would be zero anyways. */
         vars.liquidationIncentiveMantissa = fintroller.liquidationIncentiveMantissa();
@@ -107,14 +107,14 @@ contract BalanceSheet is
                 Exp({ mantissa: vars.liquidationIncentiveMantissa }),
                 Exp({ mantissa: vars.underlyingPriceUpscaled })
             );
-            require(vars.mathErr == MathError.NO_ERROR, "ERR_GET_CLUTCHABLE_COLLATERAL_MATH_ERROR");
+            require(vars.mathErr == MathError.NO_ERROR, "ERR_GET_CLUTCHABLE_COLLATERALS_MATH_ERROR");
 
             /* Calculate the mantissa form of the clutched collateral amount. */
             (vars.mathErr, vars.clutchableCollateralAmountsUpscaled[i]) = divExp(
                 vars.numerator,
                 Exp({ mantissa: vars.collateralPricesUpscaled[i] })
             );
-            require(vars.mathErr == MathError.NO_ERROR, "ERR_GET_CLUTCHABLE_COLLATERAL_MATH_ERROR");
+            require(vars.mathErr == MathError.NO_ERROR, "ERR_GET_CLUTCHABLE_COLLATERALS_MATH_ERROR");
 
             /* If the precision scalar is not 1, calculate the final form of the clutched collateral amount. */
             vars.collateralPrecisionScalars[i] = fyToken.collateralPrecisionScalars(address(collaterals[i]));
@@ -123,7 +123,7 @@ contract BalanceSheet is
                     vars.clutchableCollateralAmountsUpscaled[i].mantissa,
                     vars.collateralPrecisionScalars[i]
                 );
-                require(vars.mathErr == MathError.NO_ERROR, "ERR_GET_CLUTCHABLE_COLLATERAL_MATH_ERROR");
+                require(vars.mathErr == MathError.NO_ERROR, "ERR_GET_CLUTCHABLE_COLLATERALS_MATH_ERROR");
             } else {
                 vars.clutchableCollateralAmounts[i] = vars.clutchableCollateralAmountsUpscaled[i].mantissa;
             }
@@ -208,7 +208,7 @@ contract BalanceSheet is
 
         require(
             collaterals.length == lockedCollateralAmounts.length,
-            "ERR_WRONG_COLLATERAL_AMOUNTS_LENGTH"
+            "ERR_GET_HYPOTHETICAL_COLLATERALIZATION_RATIO_AMOUNTS_ERROR"
         );
 
         /* Avoid the zero edge cases. */
@@ -417,14 +417,14 @@ contract BalanceSheet is
 
         require(
             collaterals.length == collateralAmounts.length,
-            "ERR_WRONG_COLLATERAL_AMOUNTS_LENGTH"
+            "ERR_CLUTCH_COLLATERALS_AMOUNTS_ERROR"
         );
 
         for (uint256 i = 0; i < collaterals.length; i += 1) {
             if (collateralAmounts[i] > 0) {
                 /* Checks: there is enough clutchable collaterals in the vault. */
                 uint256 lockedCollateral = vaults[address(fyToken)][borrower].lockedCollaterals[address(collaterals[i])];
-                require(lockedCollateral >= collateralAmounts[i], "ERR_INSUFFICIENT_LOCKED_COLLATERAL");
+                require(lockedCollateral >= collateralAmounts[i], "ERR_INSUFFICIENT_LOCKED_COLLATERALS");
 
                 /* Calculate the new locked collateral amount. */
                 MathError mathErr;
@@ -490,7 +490,7 @@ contract BalanceSheet is
 
         require(
             collaterals.length == collateralAmounts.length,
-            "ERR_WRONG_COLLATERAL_AMOUNTS_LENGTH"
+            "ERR_DEPOSIT_COLLATERALS_AMOUNTS_ERROR"
         );
 
         /* Effects: update storage. */
@@ -501,7 +501,7 @@ contract BalanceSheet is
                     vaults[address(fyToken)][msg.sender].freeCollaterals[address(collaterals[i])],
                     collateralAmounts[i]
                 );
-                require(mathErr == MathError.NO_ERROR, "ERR_DEPOSIT_COLLATERAL_MATH_ERROR");
+                require(mathErr == MathError.NO_ERROR, "ERR_DEPOSIT_COLLATERALS_MATH_ERROR");
                 vaults[address(fyToken)][msg.sender].freeCollaterals[address(collaterals[i])] = hypotheticalFreeCollateral;
 
                 /* Interactions: perform the Erc20 transfer. */
@@ -553,7 +553,7 @@ contract BalanceSheet is
         Erc20Interface[] memory collaterals = fyToken.getCollaterals();
 
         /* Checks: the length of the amounts array. */
-        require(collaterals.length == collateralAmounts.length, "ERR_WRONG_COLLATERAL_AMOUNTS_LENGTH");
+        require(collaterals.length == collateralAmounts.length, "ERR_FREE_COLLATERALS_AMOUNTS_ERROR");
 
         /* Checks: the zero edge case. */
         for (uint256 i = 0; i < collaterals.length; i += 1) {
@@ -565,6 +565,9 @@ contract BalanceSheet is
         require(vars.totalAmountToFree > 0, "ERR_FREE_COLLATERALS_ZERO");
 
         Vault storage vault = vaults[address(fyToken)][msg.sender];
+
+        vars.newFreeCollaterals = new uint256[](collaterals.length);
+        vars.newLockedCollaterals = new uint256[](collaterals.length);
 
         for (uint256 i = 0; i < collaterals.length; i += 1) {
             if (collateralAmounts[i] > 0) {
@@ -578,7 +581,7 @@ contract BalanceSheet is
                 /* Effects: update storage. */
                 vaults[address(fyToken)][msg.sender].lockedCollaterals[address(collaterals[i])] = vars.newLockedCollaterals[i];
                 (vars.mathErr, vars.newFreeCollaterals[i]) = addUInt(vault.freeCollaterals[address(collaterals[i])], collateralAmounts[i]);
-                require(vars.mathErr == MathError.NO_ERROR, "ERR_FREE_COLLATERAL_MATH_ERROR");
+                require(vars.mathErr == MathError.NO_ERROR, "ERR_FREE_COLLATERALS_MATH_ERROR");
                 vaults[address(fyToken)][msg.sender].freeCollaterals[address(collaterals[i])] = vars.newFreeCollaterals[i];
             }
         }
@@ -631,7 +634,7 @@ contract BalanceSheet is
 
         require(
             collaterals.length == collateralAmounts.length,
-            "ERR_WRONG_COLLATERAL_AMOUNTS_LENGTH"
+            "ERR_LOCK_COLLATERAL_AMOUNTS_ERROR"
         );
 
         MathError mathErr;
@@ -644,7 +647,7 @@ contract BalanceSheet is
                 collateralAmounts[i]
             );
 
-            require(mathErr == MathError.NO_ERROR, "ERR_LOCK_COLLATERAL_MATH_ERROR");
+            require(mathErr == MathError.NO_ERROR, "ERR_LOCK_COLLATERALS_MATH_ERROR");
         }
         require(totalCollateralAmount > 0, "ERR_LOCK_COLLATERALS_ZERO");
 
@@ -652,14 +655,14 @@ contract BalanceSheet is
 
         for (uint256 i = 0; i < collaterals.length; i += 1) {
             if (collateralAmounts[i] > 0) {
-                require(vault.freeCollaterals[address(collaterals[i])] >= collateralAmounts[i], "ERR_INSUFFICIENT_FREE_COLLATERAL");
+                require(vault.freeCollaterals[address(collaterals[i])] >= collateralAmounts[i], "ERR_INSUFFICIENT_FREE_COLLATERALS");
 
                 uint256 newLockedCollateral;
                 (mathErr, newLockedCollateral) = addUInt(
                     vault.lockedCollaterals[address(collaterals[i])],
                     collateralAmounts[i]
                 );
-                require(mathErr == MathError.NO_ERROR, "ERR_LOCK_COLLATERAL_MATH_ERROR");
+                require(mathErr == MathError.NO_ERROR, "ERR_LOCK_COLLATERALS_MATH_ERROR");
                 vaults[address(fyToken)][msg.sender].lockedCollaterals[address(collaterals[i])] = newLockedCollateral;
 
                 /* This operation can't fail because of the first `require` in this function. */
@@ -756,7 +759,7 @@ contract BalanceSheet is
 
         require(
             collaterals.length == collateralAmounts.length,
-            "ERR_WRONG_COLLATERAL_AMOUNTS_LENGTH"
+            "ERR_WITHDRAW_COLLATERALS_AMOUNTS_ERROR"
         );
 
         MathError mathErr;
@@ -778,7 +781,7 @@ contract BalanceSheet is
                 /* Checks: there is enough free collateral. */
                 require(
                     vaults[address(fyToken)][msg.sender].freeCollaterals[address(collaterals[i])] >= collateralAmounts[i],
-                    "ERR_INSUFFICIENT_FREE_COLLATERAL"
+                    "ERR_INSUFFICIENT_FREE_COLLATERALS"
                 );
 
                 /* Effects: update storage. */

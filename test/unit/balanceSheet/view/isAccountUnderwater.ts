@@ -31,16 +31,16 @@ export default function shouldBehaveLikeIsAccountUnderwater(): void {
 
     describe("when the debt is non-zero", function () {
       const debt: BigNumber = tokenAmounts.oneHundred;
-      const lockedCollateral: BigNumber = tokenAmounts.ten;
+      const lockedCollaterals: BigNumber[] = [tokenAmounts.ten, tokenAmounts.ten];
 
       beforeEach(async function () {
         await this.stubs.fintroller.mock.getBondCollateralizationRatio
           .withArgs(this.stubs.fyToken.address)
           .returns(fintrollerConstants.defaultCollateralizationRatio);
-        await this.contracts.balanceSheet.__godMode_setVaultLockedCollateral(
+        await this.contracts.balanceSheet.__godMode_setVaultLockedCollaterals(
           this.stubs.fyToken.address,
           this.accounts.borrower,
-          lockedCollateral,
+          lockedCollaterals,
         );
         await this.contracts.balanceSheet.__godMode_setVaultDebt(
           this.stubs.fyToken.address,
@@ -62,7 +62,7 @@ export default function shouldBehaveLikeIsAccountUnderwater(): void {
 
       describe("when the user is dangerously collateralized", function () {
         beforeEach(async function () {
-          await this.stubs.oracle.mock.getAdjustedPrice.withArgs("WETH").returns(prices.twelveDollars);
+          await this.stubs.oracle.mock.getAdjustedPrice.withArgs("WETH").returns(prices.twelveDollars.div(BigNumber.from(2))); // TODO: Verify this amount
         });
 
         /* The price of 1 WETH is $12 so the new collateralization ratio becomes 120%. */

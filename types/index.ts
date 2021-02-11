@@ -27,7 +27,7 @@ export interface Accounts {
 /* TODO: refactor this so that contract types differ for each test suite type. */
 export interface Contracts {
   balanceSheet: GodModeBalanceSheet | BalanceSheet;
-  collateral: Erc20Mintable;
+  collaterals: Erc20Mintable[];
   collateralPriceFeed: SimplePriceFeed;
   fintroller: Fintroller;
   fyToken: GodModeFyToken | FyToken;
@@ -48,7 +48,7 @@ export interface Signers {
 
 export interface Stubs {
   balanceSheet: MockContract;
-  collateral: MockContract;
+  collaterals: MockContract[];
   collateralPriceFeed: MockContract;
   fintroller: MockContract;
   fyToken: MockContract;
@@ -60,7 +60,7 @@ export interface Stubs {
 
 export interface Vault {
   0: BigNumber /* debt */;
-  1: BigNumber /* freeCollateral */;
-  2: BigNumber /* lockedCollateral */;
+  1: BigNumber[] /* freeCollateral */;
+  2: BigNumber[] /* lockedCollateral */;
   3: boolean /* isOpen */;
 }

@@ -21,7 +21,7 @@ contract GodModeBalanceSheet is BalanceSheet {
         vaults[address(fyToken)][borrower].debt = newVaultDebt;
     }
 
-    function __godMode_setVaultFreeCollateral(
+    function __godMode_setVaultFreeCollaterals(
         FyTokenInterface fyToken,
         address borrower,
         uint256[] memory newFreeCollaterals
@@ -33,7 +33,7 @@ contract GodModeBalanceSheet is BalanceSheet {
         }
     }
 
-    function __godMode_setVaultLockedCollateral(
+    function __godMode_setVaultLockedCollaterals(
         FyTokenInterface fyToken,
         address borrower,
         uint256[] memory newLockedCollaterals

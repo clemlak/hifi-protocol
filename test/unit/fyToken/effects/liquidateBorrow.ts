@@ -13,16 +13,16 @@ async function stubLiquidateBorrowInternalCalls(
   fyTokenAddress: string,
   newBorrowAmount: BigNumber,
   repayAmount: BigNumber,
-  clutchedCollateralAmount: BigNumber,
+  clutchedCollateralAmounts: BigNumber[],
 ): Promise<void> {
   await this.stubs.balanceSheet.mock.setVaultDebt
     .withArgs(fyTokenAddress, this.accounts.borrower, newBorrowAmount)
     .returns(true);
-  await this.stubs.balanceSheet.mock.getClutchableCollateral
+  await this.stubs.balanceSheet.mock.getClutchableCollaterals
     .withArgs(fyTokenAddress, repayAmount)
-    .returns(clutchedCollateralAmount);
-  await this.stubs.balanceSheet.mock.clutchCollateral
-    .withArgs(fyTokenAddress, this.accounts.liquidator, this.accounts.borrower, clutchedCollateralAmount)
+    .returns(clutchedCollateralAmounts);
+  await this.stubs.balanceSheet.mock.clutchCollaterals
+    .withArgs(fyTokenAddress, this.accounts.liquidator, this.accounts.borrower, clutchedCollateralAmounts)
     .returns(true);
 }
 
@@ -148,7 +148,7 @@ export default function shouldBehaveLikeLiquidateBorrow(): void {
             });
 
             describe("when the borrower has a debt", function () {
-              const clutchableCollateralAmount: BigNumber = tokenAmounts.pointFiftyFive;
+              const clutchableCollateralAmounts: BigNumber[] = [tokenAmounts.pointFiftyFive];
 
               beforeEach(async function () {
                 /* User borrows 100 fyDAI. */
@@ -163,7 +163,7 @@ export default function shouldBehaveLikeLiquidateBorrow(): void {
                   this.contracts.fyToken.address,
                   newBorrowAmount,
                   repayAmount,
-                  clutchableCollateralAmount,
+                  clutchableCollateralAmounts,
                 );
               });
 
@@ -276,7 +276,7 @@ export default function shouldBehaveLikeLiquidateBorrow(): void {
                         this.accounts.liquidator,
                         this.accounts.borrower,
                         repayAmount,
-                        clutchableCollateralAmount,
+                        clutchableCollateralAmounts,
                       );
                   });
                 });

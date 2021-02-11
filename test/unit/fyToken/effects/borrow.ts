@@ -7,11 +7,11 @@ import { contextForTimeDependentTests } from "../../../contexts";
 import { fintrollerConstants, percentages, tokenAmounts } from "../../../../helpers/constants";
 import { fyTokenConstants } from "../../../../helpers/constants";
 import { increaseTime } from "../../../jsonRpc";
-import { stubIsVaultOpen, stubVaultFreeCollateral, stubVaultLockedCollateral } from "../../stubs";
+import { stubIsVaultOpen, stubVaultFreeCollaterals, stubVaultLockedCollaterals } from "../../stubs";
 
 export default function shouldBehaveLikeBorrow(): void {
   const borrowAmount: BigNumber = tokenAmounts.oneHundred;
-  const collateralAmount: BigNumber = tokenAmounts.ten;
+  const collateralAmounts: BigNumber[] = [tokenAmounts.ten, tokenAmounts.ten];
 
   describe("when the vault is not open", function () {
     beforeEach(async function () {
@@ -117,7 +117,7 @@ export default function shouldBehaveLikeBorrow(): void {
                 beforeEach(async function () {
                   /* The fyToken makes an internal call to this stubbed function. */
                   await this.stubs.balanceSheet.mock.getHypotheticalCollateralizationRatio
-                    .withArgs(this.contracts.fyToken.address, this.accounts.borrower, Zero, borrowAmount)
+                    .withArgs(this.contracts.fyToken.address, this.accounts.borrower, [Zero], borrowAmount)
                     .returns(Zero);
                 });
 
@@ -132,16 +132,16 @@ export default function shouldBehaveLikeBorrow(): void {
                 describe("when the caller did not lock the collateral", function () {
                   beforeEach(async function () {
                     /* Stub the value of the free collateral. */
-                    await stubVaultFreeCollateral.call(
+                    await stubVaultFreeCollaterals.call(
                       this,
                       this.contracts.fyToken.address,
                       this.accounts.borrower,
-                      collateralAmount,
+                      collateralAmounts,
                     );
 
                     /* The fyToken makes an internal call to this stubbed function. */
                     await this.stubs.balanceSheet.mock.getHypotheticalCollateralizationRatio
-                      .withArgs(this.contracts.fyToken.address, this.accounts.borrower, Zero, borrowAmount)
+                      .withArgs(this.contracts.fyToken.address, this.accounts.borrower, [Zero], borrowAmount)
                       .returns(Zero);
                   });
 
@@ -154,11 +154,11 @@ export default function shouldBehaveLikeBorrow(): void {
 
                 describe("when the caller locked the collateral", function () {
                   beforeEach(async function () {
-                    await stubVaultLockedCollateral.call(
+                    await stubVaultLockedCollaterals.call(
                       this,
                       this.contracts.fyToken.address,
                       this.accounts.borrower,
-                      collateralAmount,
+                      collateralAmounts,
                     );
                   });
 
@@ -170,7 +170,7 @@ export default function shouldBehaveLikeBorrow(): void {
                         .withArgs(
                           this.contracts.fyToken.address,
                           this.accounts.borrower,
-                          collateralAmount,
+                          collateralAmounts,
                           borrowAmount,
                         )
                         .returns(dangerousCollateralizationRatio);
@@ -191,7 +191,7 @@ export default function shouldBehaveLikeBorrow(): void {
                         .withArgs(
                           this.contracts.fyToken.address,
                           this.accounts.borrower,
-                          collateralAmount,
+                          collateralAmounts,
                           borrowAmount,
                         )
                         .returns(safeCollateralizationRatio);
