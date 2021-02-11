@@ -10,8 +10,8 @@ import "./FyTokenInterface.sol";
 abstract contract BalanceSheetStorage {
     struct Vault {
         uint256 debt;
-        uint256 freeCollateral;
-        uint256 lockedCollateral;
+        mapping (address => uint256) freeCollaterals;
+        mapping (address => uint256) lockedCollaterals;
         bool isOpen;
     }
 

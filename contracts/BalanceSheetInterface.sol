@@ -2,6 +2,7 @@
 pragma solidity ^0.7.0;
 
 import "./BalanceSheetStorage.sol";
+import "@paulrberg/contracts/token/erc20/Erc20Interface.sol";
 
 /**
  * @title BalanceSheetInterface
@@ -11,11 +12,13 @@ abstract contract BalanceSheetInterface is BalanceSheetStorage {
     /**
      * CONSTANT FUNCTIONS
      */
-    function getClutchableCollateral(FyTokenInterface fyToken, uint256 repayAmount)
+    function getClutchableCollaterals(FyTokenInterface fyToken, uint256 repayAmount)
         external
         view
         virtual
-        returns (uint256);
+        returns (
+            uint256[] memory
+        );
 
     function getCurrentCollateralizationRatio(FyTokenInterface fyToken, address borrower)
         public
@@ -26,7 +29,7 @@ abstract contract BalanceSheetInterface is BalanceSheetStorage {
     function getHypotheticalCollateralizationRatio(
         FyTokenInterface fyToken,
         address borrower,
-        uint256 lockedCollateral,
+        uint256[] memory lockedCollateralAmounts,
         uint256 debt
     ) public view virtual returns (uint256);
 
@@ -36,18 +39,20 @@ abstract contract BalanceSheetInterface is BalanceSheetStorage {
         virtual
         returns (
             uint256,
-            uint256,
-            uint256,
+            uint256[] memory,
+            uint256[] memory,
             bool
         );
 
     function getVaultDebt(FyTokenInterface fyToken, address borrower) external view virtual returns (uint256);
 
-    function getVaultLockedCollateral(FyTokenInterface fyToken, address borrower)
+    function getVaultLockedCollaterals(FyTokenInterface fyToken, address borrower)
         external
         view
         virtual
-        returns (uint256);
+        returns (
+            uint256[] memory
+        );
 
     function isAccountUnderwater(FyTokenInterface fyToken, address borrower) external view virtual returns (bool);
 
@@ -57,18 +62,27 @@ abstract contract BalanceSheetInterface is BalanceSheetStorage {
      * NON-CONSTANT FUNCTIONS
      */
 
-    function clutchCollateral(
+    function clutchCollaterals(
         FyTokenInterface fyToken,
         address liquidator,
         address borrower,
-        uint256 clutchedCollateralAmount
+        uint256[] memory collateralAmounts
     ) external virtual returns (bool);
 
-    function depositCollateral(FyTokenInterface fyToken, uint256 collateralAmount) external virtual returns (bool);
+    function depositCollaterals(
+        FyTokenInterface fyToken,
+        uint256[] memory collateralAmounts
+    ) external virtual returns (bool);
 
-    function freeCollateral(FyTokenInterface fyToken, uint256 collateralAmount) external virtual returns (bool);
+    function freeCollaterals(
+        FyTokenInterface fyToken,
+        uint256[] memory collateralAmounts
+    ) external virtual returns (bool);
 
-    function lockCollateral(FyTokenInterface fyToken, uint256 collateralAmount) external virtual returns (bool);
+    function lockCollaterals(
+        FyTokenInterface fyToken,
+        uint256[] memory collateralAmounts
+    ) external virtual returns (bool);
 
     function openVault(FyTokenInterface fyToken) external virtual returns (bool);
 
@@ -78,28 +92,52 @@ abstract contract BalanceSheetInterface is BalanceSheetStorage {
         uint256 newVaultDebt
     ) external virtual returns (bool);
 
-    function withdrawCollateral(FyTokenInterface fyToken, uint256 collateralAmount) external virtual returns (bool);
+    function withdrawCollaterals(
+        FyTokenInterface fyToken,
+        uint256[] memory collateralAmounts
+    ) external virtual returns (bool);
 
     /**
      * EVENTS
      */
 
-    event ClutchCollateral(
+    event ClutchCollaterals(
         FyTokenInterface indexed fyToken,
         address indexed liquidator,
         address indexed borrower,
-        uint256 clutchedCollateralAmount
+        Erc20Interface[] collateralAddresses,
+        uint256[] collateralAmounts
     );
 
-    event DepositCollateral(FyTokenInterface indexed fyToken, address indexed borrower, uint256 collateralAmount);
+    event DepositCollaterals(
+        FyTokenInterface indexed fyToken,
+        address indexed borrower,
+        Erc20Interface[] collateralAddresses,
+        uint256[] collateralAmounts
+    );
 
-    event FreeCollateral(FyTokenInterface indexed fyToken, address indexed borrower, uint256 collateralAmount);
+    event FreeCollaterals(
+        FyTokenInterface indexed fyToken,
+        address indexed borrower,
+        Erc20Interface[] collateralAddresses,
+        uint256[] collateralAmounts
+    );
 
-    event LockCollateral(FyTokenInterface indexed fyToken, address indexed borrower, uint256 collateralAmount);
+    event LockCollaterals(
+        FyTokenInterface indexed fyToken,
+        address indexed borrower,
+        Erc20Interface[] collateralAddresses,
+        uint256[] collateralAmounts
+    );
 
     event OpenVault(FyTokenInterface indexed fyToken, address indexed borrower);
 
     event SetVaultDebt(FyTokenInterface indexed fyToken, address indexed borrower, uint256 oldDebt, uint256 newDebt);
 
-    event WithdrawCollateral(FyTokenInterface indexed fyToken, address indexed borrower, uint256 collateralAmount);
+    event WithdrawCollaterals(
+        FyTokenInterface indexed fyToken,
+        address indexed borrower,
+        Erc20Interface[] collateralAddresses,
+        uint256[] collateralAmounts
+    );
 }

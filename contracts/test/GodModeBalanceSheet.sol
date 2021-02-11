@@ -24,17 +24,25 @@ contract GodModeBalanceSheet is BalanceSheet {
     function __godMode_setVaultFreeCollateral(
         FyTokenInterface fyToken,
         address borrower,
-        uint256 newFreeCollateral
+        uint256[] memory newFreeCollaterals
     ) external {
-        vaults[address(fyToken)][borrower].freeCollateral = newFreeCollateral;
+        Erc20Interface[] memory collaterals = fyToken.getCollaterals();
+
+        for (uint256 i = 0; i < collaterals.length; i += 1) {
+            vaults[address(fyToken)][borrower].freeCollaterals[address(collaterals[i])] = newFreeCollaterals[i];
+        }
     }
 
     function __godMode_setVaultLockedCollateral(
         FyTokenInterface fyToken,
         address borrower,
-        uint256 newLockedCollateral
+        uint256[] memory newLockedCollaterals
     ) external {
-        vaults[address(fyToken)][borrower].lockedCollateral = newLockedCollateral;
+        Erc20Interface[] memory collaterals = fyToken.getCollaterals();
+
+        for (uint256 i = 0; i < collaterals.length; i += 1) {
+            vaults[address(fyToken)][borrower].lockedCollaterals[address(collaterals[i])] = newLockedCollaterals[i];
+        }
     }
 
     function __godMode_setVaultIsOpen(

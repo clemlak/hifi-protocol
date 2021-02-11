@@ -17,6 +17,8 @@ abstract contract FyTokenInterface is
      */
     function isMatured() public view virtual returns (bool);
 
+    function getCollaterals() external view virtual returns (Erc20Interface[] memory);
+
     /**
      * NON-CONSTANT FUNCTIONS
      */
@@ -43,7 +45,7 @@ abstract contract FyTokenInterface is
         address indexed liquidator,
         address indexed borrower,
         uint256 repayAmount,
-        uint256 clutchedCollateralAmount
+        uint256[] clutchedCollateralAmounts
     );
 
     event RepayBorrow(address indexed payer, address indexed borrower, uint256 repayAmount, uint256 newDebt);
