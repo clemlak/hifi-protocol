@@ -509,7 +509,6 @@ contract BalanceSheet is
             }
         }
 
-        /* TODO: Verify if we can use the array of Erc20Interfaces as an array of addresses for this event */
         emit DepositCollaterals(fyToken, msg.sender, collaterals, collateralAmounts);
 
         return true;
