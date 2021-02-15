@@ -41,7 +41,7 @@ export default function shouldBehaveLikeGetClutchableCollaterals(): void {
     describe("when the liquidation incentive is not zero", function () {
       describe("when the collaterals have 18 decimals", function () {
         beforeEach(async function () {
-          for (let i = 0; this.stubs.collaterals.length; i += 1) {
+          for (let i = 0; i < this.stubs.collaterals.length; i += 1) {
             console.log(this.stubs.collaterals[i].mock);
             await this.stubs.collaterals[i].mock.decimals.returns(BigNumber.from(18));
           }
@@ -60,7 +60,7 @@ export default function shouldBehaveLikeGetClutchableCollaterals(): void {
 
       describe("when the collaterals have 8 decimals", function () {
         beforeEach(async function () {
-          for (let i = 0; this.stubs.collaterals.length; i += 1) {
+          for (let i = 0; i < this.stubs.collaterals.length; i += 1) {
             await this.stubs.collaterals[i].mock.decimals.returns(BigNumber.from(8));
           }
 
