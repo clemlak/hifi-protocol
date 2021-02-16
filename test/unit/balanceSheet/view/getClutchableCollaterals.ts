@@ -42,7 +42,6 @@ export default function shouldBehaveLikeGetClutchableCollaterals(): void {
       describe("when the collaterals have 18 decimals", function () {
         beforeEach(async function () {
           for (let i = 0; i < this.stubs.collaterals.length; i += 1) {
-            console.log(this.stubs.collaterals[i].mock);
             await this.stubs.collaterals[i].mock.decimals.returns(BigNumber.from(18));
           }
 
