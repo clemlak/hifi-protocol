@@ -124,7 +124,7 @@ export default function shouldBehaveLikeLockCollaterals(): void {
                 await this.contracts.balanceSheet.__godMode_setVaultDebt(
                   this.stubs.fyToken.address,
                   this.accounts.borrower,
-                  debt,
+                  debt.mul(2),
                 );
               });
 
