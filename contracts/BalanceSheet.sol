@@ -96,6 +96,8 @@ contract BalanceSheet is
         vars.underlyingPriceUpscaled = oracle.getAdjustedPrice(fyToken.underlying().symbol());
 
         vars.collateralPricesUpscaled = new uint256[](collaterals.length);
+        vars.clutchableCollateralAmountsUpscaled = new Exp[](collaterals.length);
+        vars.collateralPrecisionScalars = new uint256[](collaterals.length);
 
         for (uint256 i = 0; i < collaterals.length; i += 1) {
             /* Grab the upscaled USD price of the collateral. */
