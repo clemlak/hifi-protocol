@@ -28,7 +28,7 @@ export interface Accounts {
 export interface Contracts {
   balanceSheet: GodModeBalanceSheet | BalanceSheet;
   collaterals: Erc20Mintable[];
-  collateralPriceFeed: SimplePriceFeed;
+  collateralPriceFeeds: SimplePriceFeed[];
   fintroller: Fintroller;
   fyToken: GodModeFyToken | FyToken;
   oracle: ChainlinkOperator;

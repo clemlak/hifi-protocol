@@ -5,7 +5,7 @@ import { tokenAmounts } from "../../../../helpers/constants";
 
 export default function shouldBehaveLikeLiquidateBorrow(): void {
   const borrowAmount: BigNumber = tokenAmounts.oneHundred;
-  const collateralAmount: BigNumber = tokenAmounts.ten;
+  const collateralAmounts: BigNumber[] = [tokenAmounts.ten, BigNumber.from(0)];
   const repayAmount: BigNumber = tokenAmounts.forty;
   const newBorrowAmount = borrowAmount.sub(repayAmount);
 
@@ -27,20 +27,20 @@ export default function shouldBehaveLikeLiquidateBorrow(): void {
       .setBondDebtCeiling(this.contracts.fyToken.address, tokenAmounts.oneHundredThousand);
 
     /* Mint 10 WETH and approve the Balance Sheet to spend it all. */
-    await this.contracts.collateral.mint(this.accounts.borrower, collateralAmount);
-    await this.contracts.collateral
+    await this.contracts.collaterals[0].mint(this.accounts.borrower, collateralAmounts[0]);
+    await this.contracts.collaterals[0]
       .connect(this.signers.borrower)
-      .approve(this.contracts.balanceSheet.address, collateralAmount);
+      .approve(this.contracts.balanceSheet.address, collateralAmounts[0]);
 
     /* Deposit the 10 WETH in the Balance Sheet. */
     await this.contracts.balanceSheet
       .connect(this.signers.borrower)
-      .depositCollateral(this.contracts.fyToken.address, collateralAmount);
+      .depositCollaterals(this.contracts.fyToken.address, collateralAmounts);
 
     /* Lock the 10 WETH in the vault. */
     await this.contracts.balanceSheet
       .connect(this.signers.borrower)
-      .lockCollateral(this.contracts.fyToken.address, collateralAmount);
+      .lockCollaterals(this.contracts.fyToken.address, collateralAmounts);
 
     /* Recall that the default price of 1 WETH is $100, which makes for a 1000% collateralization rate. */
     await this.contracts.fyToken.connect(this.signers.borrower).borrow(borrowAmount);
